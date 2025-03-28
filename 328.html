@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>二次方程求解器</title>
+    <style>
+        .equation {
+            font-size: 20px;
+            margin: 20px;
+        }
+        input {
+            width: 60px;
+            margin: 0 5px;
+        }
+        #solution {
+            margin: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="equation">
+        x² + <input id="b" type="number" step="any">x + <input id="c" type="number" step="any"> = 0
+    </div>
+    <div id="solution">输入系数以查看解</div>
+
+    <script>
+        function formatNumber(num) {
+            // 格式化为两位小数并移除冗余的零
+            return num.toFixed(2).replace(/\.?0+$/, '');
+        }
+
+        function updateSolution() {
+            const b = parseFloat(document.getElementById('b').value) || 0;
+            const c = parseFloat(document.getElementById('c').value) || 0;
+            const discriminant = b * b - 4 * c;
+            const solutionElement = document.getElementById('solution');
+            let solutionText;
+
+            if (Math.abs(discriminant) < 1e-10) {  // 处理浮点误差
+                // 单根
+                const x = -b / 2;
+                solutionText = `x = ${formatNumber(x)}`;
+            } else if (discriminant > 0) {
+                // 两个实根
+                const sqrtD = Math.sqrt(discriminant);
+                const x1 = (-b + sqrtD) / 2;
+                const x2 = (-b - sqrtD) / 2;
+                solutionText = `x₁ = ${formatNumber(x1)}, x₂ = ${formatNumber(x2)}`;
+            } else {
+                // 复根
+                const real = -b / 2;
+                const imag = Math.sqrt(-discriminant) / 2;
+                const realStr = formatNumber(real);
+                const imagStr = formatNumber(imag);
+
+                if (Math.abs(real) < 1e-10) {  // 实部为零
+                    solutionText = `x₁ = ${imagStr}i, x₂ = -${imagStr}i`;
+                } else {
+                    solutionText = `x₁ = ${realStr} + ${imagStr}i, x₂ = ${realStr} - ${imagStr}i`;
+                }
+            }
+            solutionElement.textContent = solutionText;
+        }
+
+        // 绑定输入事件
+        document.getElementById('b').addEventListener('input', updateSolution);
+        document.getElementById('c').addEventListener('input', updateSolution);
+        updateSolution();  // 初始计算
+    </script>
+</body>
+</html>
