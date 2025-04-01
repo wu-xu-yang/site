@@ -1,0 +1,40 @@
+arithmetic operator:+-x/%**typeof
+bitwise operator:&|~
+comparison operator:>,>=,==,===,!=,!==,
+logical operator:&&,||,!
+selection:1-way 2-way multi-way:switch-case-break-default
+loop:for(itu)s while(t){s,u}
+the "break" key word in loop control:
+virtual infinite loop:while (true)
+let i=1 s=0:
+while(true)
+   s+=i:(s=s+i);
+{s+=i++;//(s=s+i;i=i+1:);
+   if(i==11)break;
+}
+for(;;)
+{
+   if(i%2==1){i++;continue;}
+   s+=i;
+   i==;
+   if(i>100)break;
+}
+List in javascript==C's array + linked list
+resizable,dynamic
+let a=[];
+let b=[1,3,4];
+let c=new Array(10);//[null,null,null,...]
+
+add on tail:a.push(2)
+remove from tail:let y=a.pop()
+remove from middle:a.splice(startingindex,numberOfelementsTobeRemoved),e.g,
+a.splice(2,4);//starting from index 2,remove 4elements
+insert into somewhere in middle:
+a.splice(2,0,4);
+To make dynamic web contents,
+let str.push("<div");
+str.push(a1);
+str.push(b2);
+str.push("dfgfgf");
+let htmlcode=str.join("")
+
