@@ -1,0 +1,98 @@
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #E0F7FA; /* 浅蓝色背景 */
+        }
+        .balloon {
+            position: absolute;
+            border-radius: 50% 50% 48% 52%;
+            filter: brightness(1.1);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+<script>
+const MAX_BALLOONS = 10;
+const MIN_SIZE = 40;
+const MAX_SIZE = 80;
+
+class FloatingBalloon {
+    constructor() {
+        this.element = document.createElement('div');
+        this.init();
+        document.body.appendChild(this.element);
+    }
+
+    init() {
+        this.size = Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE;
+        this.x = Math.random() * window.innerWidth;
+        this.y = window.innerHeight + 100;
+        this.speed = Math.random() * 1.5 + 1;
+        this.baseHue = Math.random() * 360;
+        this.animationPhase = Math.random() * 2 * Math.PI;
+        
+        this.updateStyle();
+        this.element.classList.add('balloon');
+    }
+
+    updateStyle() {
+        const currentHue = (this.baseHue + performance.now() * 0.01) % 360;
+        this.element.style.cssText = `
+            width: ${this.size}px;
+            height: ${this.size * 1.15}px;
+            left: ${this.x}px;
+            top: ${this.y}px;
+            background: linear-gradient(
+                145deg, 
+                hsl(${currentHue}, 90%, 70%), 
+                hsl(${currentHue}, 80%, 50%)
+            );
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.1);
+            transform: rotate(${Math.sin(this.animationPhase) * 8}deg);
+        `;
+    }
+
+    update() {
+        // 动态更新位置和样式
+        this.y -= this.speed;
+        this.animationPhase += 0.05;
+        this.size += Math.sin(performance.now() * 0.005) * 0.3;
+        
+        // 边界检测
+        if (this.y < -this.size * 3) {
+            this.recycle();
+        }
+        
+        this.updateStyle();
+    }
+
+    recycle() {
+        this.size = Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE;
+        this.x = Math.random() * window.innerWidth;
+        this.y = window.innerHeight + 100;
+        this.baseHue = Math.random() * 360;
+        this.speed = Math.random() * 1.5 + 1;
+    }
+}
+
+// 初始化气球池
+const balloonPool = Array(MAX_BALLOONS).fill().map(() => new FloatingBalloon());
+
+// 动画循环
+function animate() {
+    balloonPool.forEach(balloon => balloon.update());
+    requestAnimationFrame(animate);
+}
+animate();
+
+// 响应窗口变化
+window.addEventListener('resize', () => {
+    balloonPool.forEach(balloon => balloon.recycle());
+});
+</script>
+</body>
+</html>
