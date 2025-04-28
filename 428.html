@@ -1,0 +1,105 @@
+<html>
+<head>
+    <style>
+        body {
+            background: #e6f7ff; /* 淡蓝色背景 */
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        @keyframes fly {
+            from { top: 100vh }    /* 从屏幕底部开始 */
+            to { top: 20vh }       /* 爆炸高度设为屏幕20%位置 */
+        }
+
+        .burst {
+            animation: burst 0.5s forwards;
+        }
+
+        @keyframes burst {
+            0% { transform: scale(1); opacity: 1 }
+            100% { transform: scale(3); opacity: 0 }
+        }
+    </style>
+</head>
+<body>
+<script>
+const colors = ['red', 'orange', 'yellow', 'green', 'black', 'blue', 'purple'];
+let balloonCount = 0;
+
+function Balloon() {
+    // (1) 从预设颜色随机选择
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.initialSize = Math.random() * 50 + 30; // 初始直径 30-80px
+    this.speed = Math.random() * 3 + 2;        // 上升速度 2-5秒
+    this.id = ++balloonCount;
+    this.element = null;
+
+    this.make = function() {
+        this.element = document.createElement('div');
+        this.element.className = 'balloon';
+        this.element.style.cssText = `
+            width: ${this.initialSize}px;
+            height: ${this.initialSize}px;
+            border-radius: 50%;
+            background: ${this.color};
+            position: absolute;
+            left: ${Math.random() * window.innerWidth}px;
+            top: 100vh;
+            transition: all 0.3s ease-out;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+        `;
+        document.body.appendChild(this.element);
+    }
+
+    this.rise = function() {
+        // (2) 开始上升动画
+        this.element.style.animation = `fly ${this.speed}s linear`;
+        
+        // (3) 动态增长尺寸
+        const startTime = Date.now();
+        const growthFactor = Math.random() * 0.8 + 0.5; // 随机增长倍数 0.5x-1.3x
+        const growInterval = setInterval(() => {
+            const progress = (Date.now() - startTime) / (this.speed * 1000);
+            const currentSize = this.initialSize * (1 + progress * growthFactor);
+            this.element.style.width = `${currentSize}px`;
+            this.element.style.height = `${currentSize}px`;
+        }, 50);
+
+        // (4) 到达爆炸高度后自动爆破
+        this.element.addEventListener('animationend', () => {
+            clearInterval(growInterval);
+            this.burst();
+        });
+    }
+
+    this.burst = function() {
+        this.element.classList.add('burst');
+        setTimeout(() => {
+            this.element.remove();
+        }, 500);
+    }
+}
+
+// (5) 持续生成气球（每2秒一个）
+function createBalloon() {
+    const b = new Balloon();
+    b.make();
+    b.rise();
+}
+
+setInterval(createBalloon, 2000); // 每2秒生成新气球
+createBalloon(); // 立即生成第一个
+
+// (可选) 点击气球提前爆破
+document.body.addEventListener('click', function(e) {
+    if(e.target.classList.contains('balloon')) {
+        e.target.dispatchEvent(new Event('animationend'));
+    }
+});
+</script>
+</body>
+</html>
