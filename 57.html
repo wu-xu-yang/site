@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>天体系统 with 可排序表格</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+            cursor: pointer;
+        }
+        canvas {
+            display: block;
+        }
+        .info-card {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        #data-table {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.4);
+            display: none;
+            max-height: 80vh;
+            overflow: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 600px;
+        }
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        th:hover {
+            background: #f8f8f8;
+        }
+        th.sorted-asc::after {
+            content: " ↑";
+            color: #666;
+        }
+        th.sorted-desc::after {
+            content: " ↓";
+            color: #666;
+        }
+        .color-block {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="mainCanvas"></canvas>
+    <div id="info" class="info-card"></div>
+    <div id="data-table">
+        <table>
+            <thead>
+                <tr>
+                    <th data-field="mass">质量</th>
+                    <th data-field="orbit">轨道半径</th>
+                    <th data-field="diameter">直径</th>
+                    <th data-field="speed">速度</th>
+                    <th data-field="color">颜色</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        const bodies = [];
+        let sortField = null;
+        let sortOrder = 1; // 1=升序，-1=降序
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        initCanvas();
+        window.addEventListener('resize', initCanvas);
+
+        class CelestialBody {
+            constructor(config) {
+                this.centerX = config.centerX;
+                this.centerY = config.centerY;
+                this.radius = config.radius;
+                this.orbitRadius = config.orbitRadius;
+                this.speed = config.speed;
+                this.color = config.color;
+                this.mass = config.mass;
+                this.angle = Math.random() * Math.PI * 2;
+                this.updatePosition();
+            }
+
+            updatePosition() {
+                this.x = this.centerX + Math.cos(this.angle) * this.orbitRadius;
+                this.y = this.centerY + Math.sin(this.angle) * this.orbitRadius;
+                this.angle += this.speed;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+
+        function initSolarSystem() {
+
+            const sun = {
+                x: canvas.width/2,
+                y: canvas.height/2,
+                radius: 40,
+                color: '#FFD700',
+                mass: 100000
+            };
+
+
+            for (let i = 0; i < 9; i++) {
+                bodies.push(new CelestialBody({
+                    centerX: sun.x,
+                    centerY: sun.y,
+                    radius: 10 + i*2,
+                    orbitRadius: 120 + i*100,
+                    speed: 0.004 / (i+1),
+                    color: `hsl(${i*40}, 70%, 60%)`,
+                    mass: 5000 + i*3000
+                }));
+            }
+
+            bodies.unshift({
+                x: sun.x,
+                y: sun.y,
+                radius: sun.radius,
+                color: sun.color,
+                mass: sun.mass,
+                orbitRadius: 0,
+                speed: 0,
+                updatePosition: () => {},
+                draw: function() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+            });
+        }
+
+        function renderTable() {
+            const sorted = [...bodies].sort((a, b) => {
+                const valA = getSortValue(a);
+                const valB = getSortValue(b);
+                return (valA > valB ? 1 : -1) * sortOrder;
+            });
+
+            const tbody = document.querySelector('#data-table tbody');
+            tbody.innerHTML = sorted.map(body => `
+                <tr>
+                    <td>${body.mass.toLocaleString()}</td>
+                    <td>${body.orbitRadius.toFixed(0)}</td>
+                    <td>${(body.radius * 2).toFixed(0)}</td>
+                    <td>${(body.speed * 100).toFixed(2)}</td>
+                    <td>
+                        <div class="color-block" style="background:${body.color}"></div>
+                        ${body.color}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getSortValue(body) {
+            switch(sortField) {
+                case 'color': 
+                    return parseInt(body.color.match(/hsl\((\d+),/)[1]);
+                case 'mass': return body.mass;
+                case 'orbit': return body.orbitRadius;
+                case 'diameter': return body.radius * 2;
+                case 'speed': return body.speed;
+                default: return 0;
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'TH') {
+                const table = document.getElementById('data-table');
+                table.style.display = table.style.display === 'block' ? 'none' : 'block';
+                if (table.style.display === 'block') renderTable();
+            }
+        });
+
+        document.querySelectorAll('th[data-field]').forEach(th => {
+            th.addEventListener('click', () => {
+                const field = th.dataset.field;
+                
+                if (sortField === field) {
+                    sortOrder *= -1;
+                } else {
+                    sortField = field;
+                    sortOrder = 1;
+                }
+
+                document.querySelectorAll('th').forEach(h => {
+                    h.classList.remove('sorted-asc', 'sorted-desc');
+                });
+                th.classList.add(sortOrder === 1 ? 'sorted-asc' : 'sorted-desc');
+                
+                renderTable();
+            });
+        });
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            bodies.forEach(body => {
+                body.updatePosition();
+                body.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        initSolarSystem();
+        animate();
+    </script>
+</body>
+</html>
